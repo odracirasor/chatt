@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat em Tempo Real</title>
+</head>
+<body>
+  <h2>Chat</h2>
+  <input id="username" placeholder="Seu nome" />
+  <div id="chat" style="border:1px solid #ccc; height:200px; overflow-y:scroll; margin:10px 0; padding:5px;"></div>
+  <input id="msg" placeholder="Digite uma mensagem" />
+  <button onclick="send()">Enviar</button>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io("https://terminal-start-server.onrender.com");
+    const chat = document.getElementById("chat");
+    const usernameInput = document.getElementById("username");
+
+    socket.on("chat message", ({ username, message }) => {
+      const p = document.createElement("p");
+      p.innerText = `${username}: ${message}`;
+      chat.appendChild(p);
+      chat.scrollTop = chat.scrollHeight;
+    });
+
+    function send() {
+      const username = usernameInput.value || "Anônimo";
+      const message = document.getElementById("msg").value;
+      if (message.trim()) {
+        socket.emit("chat message", { username, message });
+        document.getElementById("msg").value = "";
+      }
+    }
+  </script>
+</body>
+</html>
