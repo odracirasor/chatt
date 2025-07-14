@@ -39,12 +39,19 @@
       padding: 10px;
       height: 300px;
       overflow-y: auto;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       background: #fafafa;
     }
 
     .message {
       margin: 5px 0;
+    }
+
+    #typing {
+      font-style: italic;
+      color: #666;
+      margin-bottom: 10px;
+      height: 20px;
     }
 
     input, button {
@@ -78,6 +85,7 @@
   <div id="chat-container">
     <input id="username" placeholder="Seu nome" />
     <div id="chat"></div>
+    <div id="typing"></div>
     <input id="msg" placeholder="Digite uma mensagem" />
     <button id="send-btn" onclick="send()">Enviar</button>
   </div>
@@ -87,6 +95,10 @@
     const socket = io("https://terminal-start-server1.onrender.com");
     const chat = document.getElementById("chat");
     const usernameInput = document.getElementById("username");
+    const msgInput = document.getElementById("msg");
+    const typingDiv = document.getElementById("typing");
+    let typing = false;
+    let typingTimeout;
 
     socket.on("chat message", ({ username, message }) => {
       const p = document.createElement("p");
@@ -98,12 +110,39 @@
 
     function send() {
       const username = usernameInput.value || "Anônimo";
-      const message = document.getElementById("msg").value;
+      const message = msgInput.value;
       if (message.trim()) {
         socket.emit("chat message", { username, message });
-        document.getElementById("msg").value = "";
+        msgInput.value = "";
+        socket.emit("stopTyping");
       }
     }
+
+    // Handle typing indicator
+    msgInput.addEventListener("input", () => {
+      const username = usernameInput.value || "Alguém";
+      if (!typing) {
+        typing = true;
+        socket.emit("typing", username);
+        typingTimeout = setTimeout(stopTyping, 1500);
+      } else {
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(stopTyping, 1500);
+      }
+    });
+
+    function stopTyping() {
+      typing = false;
+      socket.emit("stopTyping");
+    }
+
+    socket.on("typing", (username) => {
+      typingDiv.innerText = `${username} está digitando...`;
+    });
+
+    socket.on("stopTyping", () => {
+      typingDiv.innerText = "";
+    });
   </script>
 </body>
 </html>
