@@ -1,24 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chat em Tempo Real</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #f0f2f5, #dce3ed);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+
+    h2 {
+      margin-top: 20px;
+      color: #333;
+    }
+
+    #chat-container {
+      background: white;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    #chat {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      background: #fafafa;
+    }
+
+    .message {
+      margin: 5px 0;
+    }
+
+    input, button {
+      font-size: 16px;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+    }
+
+    #username, #msg {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #send-btn {
+      width: 100%;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    #send-btn:hover {
+      background: #45a049;
+    }
+  </style>
 </head>
 <body>
-  <h2>Chat</h2>
-  <input id="username" placeholder="Seu nome" />
-  <div id="chat" style="border:1px solid #ccc; height:200px; overflow-y:scroll; margin:10px 0; padding:5px;"></div>
-  <input id="msg" placeholder="Digite uma mensagem" />
-  <button onclick="send()">Enviar</button>
+  <h2>💬 Chat em Tempo Real</h2>
+  <div id="chat-container">
+    <input id="username" placeholder="Seu nome" />
+    <div id="chat"></div>
+    <input id="msg" placeholder="Digite uma mensagem" />
+    <button id="send-btn" onclick="send()">Enviar</button>
+  </div>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
-    const socket = io("https://terminal-start-server.onrender.com");
+    const socket = io("https://terminal-start-server1.onrender.com");
     const chat = document.getElementById("chat");
     const usernameInput = document.getElementById("username");
 
     socket.on("chat message", ({ username, message }) => {
       const p = document.createElement("p");
+      p.classList.add("message");
       p.innerText = `${username}: ${message}`;
       chat.appendChild(p);
       chat.scrollTop = chat.scrollHeight;
