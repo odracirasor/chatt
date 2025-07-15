@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chat em Tempo Real</title>
   <style>
     body {
@@ -62,7 +62,7 @@
       border-radius: 5px;
     }
 
-    #username, #msg {
+    #username, #to, #msg {
       width: 100%;
       box-sizing: border-box;
     }
@@ -84,6 +84,7 @@
   <h2>💬 Chat em Tempo Real</h2>
   <div id="chat-container">
     <input id="username" placeholder="Seu nome" />
+    <input id="to" placeholder="Enviar para (opcional, ex: maria)" />
     <div id="chat"></div>
     <div id="typing"></div>
     <input id="msg" placeholder="Digite uma mensagem" />
@@ -93,32 +94,36 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
     const socket = io("https://terminal-start-server1.onrender.com");
+
     const chat = document.getElementById("chat");
     const usernameInput = document.getElementById("username");
+    const toInput = document.getElementById("to");
     const msgInput = document.getElementById("msg");
     const typingDiv = document.getElementById("typing");
+
     let typing = false;
     let typingTimeout;
 
-    socket.on("chat message", ({ username, message }) => {
-      const p = document.createElement("p");
-      p.classList.add("message");
-      p.innerText = `${username}: ${message}`;
-      chat.appendChild(p);
-      chat.scrollTop = chat.scrollHeight;
+    // Register username on blur
+    usernameInput.addEventListener("blur", () => {
+      const name = usernameInput.value.trim();
+      if (name) socket.emit("register", name);
     });
 
+    // Send message
     function send() {
-      const username = usernameInput.value || "Anônimo";
-      const message = msgInput.value;
-      if (message.trim()) {
-        socket.emit("chat message", { username, message });
+      const from = usernameInput.value.trim() || "Anônimo";
+      const to = toInput.value.trim();
+      const message = msgInput.value.trim();
+
+      if (message) {
+        socket.emit("chat message", { from, to: to || null, message });
         msgInput.value = "";
-        socket.emit("stopTyping");
+        stopTyping();
       }
     }
 
-    // Handle typing indicator
+    // Typing indicator
     msgInput.addEventListener("input", () => {
       const username = usernameInput.value || "Alguém";
       if (!typing) {
@@ -143,6 +148,38 @@
     socket.on("stopTyping", () => {
       typingDiv.innerText = "";
     });
+
+    // Public messages
+    socket.on("chat message", ({ from, message, timestamp }) => {
+      appendMessage(`[${formatTime(timestamp)}] ${from}: ${message}`);
+    });
+
+    // Private messages
+    socket.on("private message", ({ from, message, timestamp }) => {
+      appendMessage(`🔒 [${formatTime(timestamp)}] ${from} (privado): ${message}`, true);
+    });
+
+    // Chat history
+    socket.on("chat history", (messages) => {
+      messages.forEach(({ from, message, timestamp }) => {
+        appendMessage(`[${formatTime(timestamp)}] ${from}: ${message}`);
+      });
+    });
+
+    function appendMessage(text, isPrivate = false) {
+      const p = document.createElement("p");
+      p.classList.add("message");
+      if (isPrivate) p.style.color = "blue";
+      p.innerText = text;
+      chat.appendChild(p);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function formatTime(timestamp) {
+      return timestamp
+        ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
   </script>
 </body>
 </html>
